@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Red Store | Premium Shopping</title>
+    <link rel="icon" type="image/png" href="logotitile.png.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #ff523b;
+            --dark: #1a1a1a;
+            --grey: #555;
+            --light-grey: #f4f4f4;
+            --shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        body { margin: 0; font-family: 'Poppins', sans-serif; overflow-x: hidden; scroll-behavior: smooth; background-color: #fdfdfd; }
+        
+        /* --- 1. SALE BANNER --- */
+        .sale-banner { background: var(--dark); color: white; text-align: center; padding: 10px; font-size: 14px; letter-spacing: 1px; }
+        .sale-banner span { color: var(--primary); font-weight: bold; animation: blink 2s infinite; }
+        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.5;} 100% {opacity: 1;} }
+
+        /* --- 2. NAVBAR & SEARCH --- */
+        .navbar { display: flex; align-items: center; justify-content: space-between; padding: 20px 5%; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+        .logo { width: 125px; cursor: pointer; color: var(--primary); font-style: italic; font-weight: 800; font-size: 26px; letter-spacing: 1px; }
+        
+        .search-container { flex: 1; margin: 0 40px; position: relative; }
+        .search-bar { width: 100%; padding: 12px 20px; border: 1px solid #ddd; border-radius: 30px; outline: none; transition: 0.3s; font-family: inherit; font-size: 14px; box-sizing: border-box; background: #fff;}
+        .search-bar:focus { border-color: var(--primary); box-shadow: 0 0 8px rgba(255, 82, 59, 0.2); }
+        
+        .search-results { position: absolute; top: 110%; left: 0; right: 0; background: white; box-shadow: var(--shadow); border-radius: 15px; max-height: 350px; overflow-y: auto; display: none; z-index: 1000; border: 1px solid #eee; }
+        .search-results.active { display: block; animation: fadeIn 0.3s ease; }
+        .search-item { display: flex; align-items: center; padding: 12px 20px; cursor: pointer; border-bottom: 1px solid #f4f4f4; transition: 0.2s; }
+        .search-item:hover { background: #fafafa; padding-left: 25px; }
+        .search-item img { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; margin-right: 15px; }
+        .search-item-info h4 { margin: 0; font-size: 14px; color: var(--dark); }
+        .search-item-info p { margin: 5px 0 0; font-size: 13px; color: var(--primary); font-weight: bold; }
+
+        nav ul { list-style: none; margin: 0; padding: 0; display: flex; align-items: center; }
+        nav ul li { margin-left: 25px; }
+        nav ul li a { text-decoration: none; color: #333; font-weight: 500; transition: 0.3s; position: relative; }
+        nav ul li a::after { content: ''; position: absolute; width: 0; height: 2px; bottom: -5px; left: 0; background-color: var(--primary); transition: 0.3s; }
+        nav ul li a:hover::after { width: 100%; }
+        
+        .nav-icons { display: flex; align-items: center; margin-left: 30px; }
+        .icon-btn { position: relative; margin-right: 25px; cursor: pointer; font-size: 22px; color: #333; transition: 0.3s;}
+        .icon-btn:hover { color: var(--primary); transform: scale(1.1); }
+        .badge-count { position: absolute; top: -8px; right: -10px; background: var(--primary); color: white; font-size: 11px; padding: 2px 7px; border-radius: 50%; font-weight: bold; border: 2px solid white;}
+        
+        .user-profile { width: 42px; height: 42px; border-radius: 50%; cursor: pointer; object-fit: cover; border: 2px solid var(--primary); display: none; transition: 0.3s; }
+        .user-profile:hover { transform: scale(1.05); }
+        .profile-menu { position: absolute; top: 80px; right: 5%; background: white; padding: 20px; width: 220px; box-shadow: var(--shadow); border-radius: 12px; display: none; z-index: 101; border: 1px solid #eee; }
+        .profile-menu.active { display: block; animation: popIn 0.3s ease; }
+
+        /* --- 3. FLOATING OFFERS WIDGET --- */
+        .offers-widget { position: fixed; left: -140px; top: 50%; transform: translateY(-50%); background: var(--dark); color: white; padding: 15px; border-radius: 0 15px 15px 0; box-shadow: var(--shadow); z-index: 500; transition: 0.4s; display: flex; align-items: center; cursor: pointer; }
+        .offers-widget:hover { left: 0; background: var(--primary); }
+        .offers-widget i { font-size: 24px; margin-right: 15px; margin-left: auto; color: gold; animation: pulse 1.5s infinite; }
+        .offers-widget-content { width: 130px; }
+        .offers-widget-content h4 { margin: 0 0 5px; font-size: 14px; }
+        .offers-widget-content p { margin: 0; font-size: 12px; font-weight: bold; color: gold; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+        /* --- 4. CUSTOM POPUPS & MODALS --- */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 2000; display: none; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+        
+        .login-box { display: flex; width: 100%; max-width: 800px; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.2); animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .login-img { flex: 1; background: url('logindog.png') center/cover; }
+        .login-form { flex: 1; padding: 50px; display: flex; flex-direction: column; justify-content: center; background: #fff;}
+        
+        /* Product Detail Modal w/ Size Selection */
+        .product-modal-box { display: flex; width: 100%; max-width: 900px; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.3); position: relative; animation: popIn 0.4s ease; }
+        .close-modal-btn { position: absolute; top: 20px; right: 25px; font-size: 26px; color: #999; cursor: pointer; z-index: 10; transition: 0.3s; }
+        .close-modal-btn:hover { color: var(--primary); transform: rotate(90deg); }
+        .p-modal-img { flex: 1; min-height: 400px; }
+        .p-modal-img img { width: 100%; height: 100%; object-fit: cover; }
+        .p-modal-details { flex: 1; padding: 40px; display: flex; flex-direction: column; justify-content: center; }
+        .p-modal-title { font-size: 32px; color: var(--dark); margin: 0 0 10px; line-height: 1.2; }
+        .p-modal-price { font-size: 26px; color: var(--primary); font-weight: bold; margin: 0 0 15px; }
+        .p-modal-desc { color: var(--grey); line-height: 1.6; margin-bottom: 20px; font-size: 14px; }
+        
+        .size-selector { display: flex; gap: 10px; margin-bottom: 25px; }
+        .size-btn { padding: 8px 15px; border: 2px solid #ddd; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; color: var(--grey); }
+        .size-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .size-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .input-group { margin-bottom: 20px; }
+        .input-group input { width: 100%; padding: 14px; border: 1px solid #e0e0e0; border-radius: 8px; outline: none; box-sizing: border-box; transition: 0.3s; font-family: inherit; }
+        .input-group input:focus { border-color: var(--primary); box-shadow: 0 0 5px rgba(255, 82, 59, 0.2); }
+        
+        .btn { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 30px; cursor: pointer; font-weight: 600; font-family: inherit; font-size: 15px; transition: 0.3s; width: 100%; }
+        .btn:hover { background: #e0432f; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 82, 59, 0.3); }
+
+        /* CUSTOM ALERT */
+        .custom-alert-box { background: white; padding: 40px; border-radius: 20px; text-align: center; width: 100%; max-width: 380px; animation: popIn 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55); box-shadow: 0 15px 40px rgba(0,0,0,0.2); }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .custom-alert-box i { font-size: 60px; color: #4CAF50; margin-bottom: 20px; }
+        .custom-alert-box h2 { margin: 0 0 15px; color: var(--dark); font-size: 24px; }
+        .custom-alert-box p { color: var(--grey); margin-bottom: 30px; font-size: 15px; line-height: 1.5; }
+
+        /* --- 5. HERO & PRODUCTS --- */
+        .hero { display: flex; align-items: center; justify-content: space-around; padding: 80px 5%; background: linear-gradient(135deg, #fff 0%, #ffe9e9 100%); }
+        .hero-text { flex: 1; padding-right: 50px; }
+        .hero-text h1 { font-size: 55px; line-height: 1.2; color: var(--dark); margin-bottom: 20px; }
+        .hero-text p { color: var(--grey); font-size: 18px; margin-bottom: 30px; }
+        .hero-img { flex: 1; text-align: right; }
+        .hero-img img { max-width: 100%; width: 500px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+
+        .container { padding: 80px 5%; max-width: 1300px; margin: auto; }
+        .title { text-align: center; margin-bottom: 60px; position: relative; line-height: 60px; color: var(--dark); font-size: 36px; font-weight: 700; }
+        .title::after { content: ''; background: var(--primary); width: 100px; height: 5px; border-radius: 5px; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); }
+        
+        .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 40px; }
+        .product-col { background: white; padding: 20px; border-radius: 15px; transition: 0.4s; cursor: pointer; border: 1px solid #f0f0f0; box-shadow: 0 5px 15px rgba(0,0,0,0.02); display: flex; flex-direction: column;}
+        .product-col:hover { transform: translateY(-10px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); border-color: transparent; }
+        .product-col img { width: 100%; height: 280px; object-fit: cover; border-radius: 10px; margin-bottom: 15px; }
+        .product-col h4 { margin: 10px 0; color: var(--dark); font-size: 18px; }
+        .product-col p { color: var(--primary); font-weight: 700; font-size: 18px; margin-bottom: 20px; }
+
+        /* --- 6. SIDEBARS (Cart & Messages) --- */
+        .right-sidebar { position: fixed; top: 0; right: -450px; width: 100%; max-width: 400px; height: 100%; background: white; box-shadow: -5px 0 25px rgba(0,0,0,0.15); z-index: 2000; transition: 0.4s cubic-bezier(0.77, 0, 0.175, 1); display: flex; flex-direction: column; }
+        .right-sidebar.active { right: 0; }
+        .sidebar-header { padding: 25px; background: var(--primary); color: white; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .sidebar-header h3 { margin: 0; font-size: 20px; }
+        .sidebar-content { flex: 1; overflow-y: auto; padding: 25px; background: #fafafa; }
+        
+        /* Cart specific */
+        .cart-item-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .cart-item-row img { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; margin-right: 15px; }
+        .cart-item-details h5 { margin: 0 0 5px; font-size: 14px; color: var(--dark); }
+        .cart-item-details p { margin: 0; color: var(--primary); font-weight: bold; font-size: 13px; }
+        .remove-item { color: #aaa; cursor: pointer; transition: 0.3s; }
+        .remove-item:hover { color: red; }
+        .sidebar-footer { padding: 25px; background: white; border-top: 1px solid #eee; }
+
+        /* Sidebar improvements */
+.right-sidebar {
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background: #fff;
+}
+
+/* Cart Item Row - Perfect Alignment */
+.cart-item-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 0;
+    border-bottom: 1px solid #eee;
+    gap: 15px;
+}
+
+.cart-item-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
+}
+
+.cart-item-row img {
+    width: 65px;
+    height: 65px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: #f9f9f9;
+}
+
+.cart-item-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.cart-item-details h5 {
+    margin: 0;
+    font-size: 14px;
+    color: var(--dark);
+    font-weight: 600;
+}
+
+.cart-item-details p {
+    margin: 0;
+    font-size: 12px;
+    color: #777;
+}
+
+.cart-item-price {
+    font-weight: bold;
+    color: var(--primary);
+    font-size: 14px;
+    margin-top: 2px;
+}
+
+.remove-item {
+    color: #ccc;
+    cursor: pointer;
+    transition: 0.3s;
+    padding: 10px;
+}
+
+.remove-item:hover {
+    color: #ff523b;
+}
+
+/* Promo Section inside Cart */
+.promo-section {
+    padding: 15px 0;
+    border-top: 1px dashed #ddd;
+    margin-top: 10px;
+}
+
+.promo-input-group {
+    display: flex;
+    gap: 10px;
+}
+
+.promo-input-group input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    outline: none;
+}
+        /* PDF Invoice Styling in Message Sidebar */
+        .invoice-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-top: 4px solid #ff523b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+
+        .invoice-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px dashed #ccc;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .invoice-title { font-weight: bold; font-size: 14px; color: #333; }
+        .invoice-date { font-size: 11px; color: #888; }
+        
+        .invoice-preview-item { font-size: 12px; color: #555; display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .invoice-total-row { border-top: 1px solid #eee; margin-top: 10px; padding-top: 5px; font-weight: bold; text-align: right; color: var(--primary); }
+
+        .pdf-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            margin-top: 12px;
+            padding: 8px;
+            background: #1a1a1a;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .pdf-btn:hover { background: var(--primary); }
+
+        /* --- 7. FOOTER --- */
+        .footer { background: #111; color: #8a8a8a; padding: 80px 0 30px; font-size: 14px; }
+        .footer-container { display: flex; flex-wrap: wrap; justify-content: space-around; padding: 0 5%; max-width: 1300px; margin: auto; }
+        .footer-col { flex-basis: 25%; min-width: 250px; margin-bottom: 40px; }
+        .footer-col h3 { color: white; margin-bottom: 20px; font-size: 18px; }
+        .app-logo img { width: 140px; cursor: pointer; margin-right: 10px; margin-top: 10px; transition: 0.3s; }
+        .social-icons i { font-size: 24px; margin-right: 20px; cursor: pointer; transition: 0.3s; color: #8a8a8a; }
+        .social-icons i:hover { color: var(--primary); }
+        .contact-info { color: #ccc; margin-bottom: 15px; display: block; text-decoration: none; transition: 0.3s; }
+        .contact-info:hover { color: white; }
+        .hidden { display: none !important; }
+        .insta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+            color: white !important;
+            text-decoration: none;
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 15px rgba(220, 39, 67, 0.3);
+        }
+
+        .insta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(220, 39, 67, 0.4);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="sale-banner">Flash Sale: Get up to <span>50% OFF</span> on all new arrivals!</div>
+
+    <div class="offers-widget" onclick="showCustomAlert('Live Offers applied!', 'Use code SAVE200 at checkout to get an extra 20% off your entire cart!')">
+        <div class="offers-widget-content">
+            <h4>Live Updates</h4>
+            <p>Code: SAVE200</p>
+        </div>
+        <i class="fa-solid fa-gift"></i>
+    </div>
+
+    <div class="navbar">
+        <div class="logo">REDSTORE</div>
+        
+        <div class="search-container">
+            <input type="text" class="search-bar" placeholder="Search for products..." id="search-input" readonly onfocus="this.removeAttribute('readonly');" autocomplete="off" spellcheck="false">
+            <div class="search-results" id="search-results"></div>
+        </div>
+
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="contact.html">Contact</a></li>
+                <li><a href="#products">Products</a></li>
+                <li><a href="user review.html">About</a></li>
+                <li><a href="devlivery2.html">Track</a></li>
+            </ul>
+        </nav>
+
+        <div class="nav-icons">
+            <div class="icon-btn" onclick="toggleMessages()">
+                <i class="fa-solid fa-envelope"></i>
+                <span class="badge-count" id="msg-count" style="display:none;">0</span>
+            </div>
+            <div class="icon-btn" onclick="toggleCart()">
+                <i class="fa-solid fa-cart-shopping"></i>
+                <span class="badge-count" id="cart-count">0</span>
+            </div>
+            
+            <img src="male.png" class="user-profile" id="nav-profile-pic" onclick="toggleProfile()">
+            <button class="btn" style="padding: 10px 25px; margin: 0 0 0 15px; width: auto; font-size: 14px;" id="nav-login-btn" onclick="openLogin()">Login</button>
+        </div>
+
+        <div class="profile-menu" id="profile-menu">
+            <h4 id="profile-name" style="margin: 0; color: var(--dark); font-size: 16px;">User</h4>
+            <p id="profile-email" style="margin: 5px 0 15px; font-size: 12px; color: var(--grey);">Premium Member</p>
+            <hr style="border:0; border-top:1px solid #eee; margin:10px 0;">
+            <p style="cursor:pointer; color: var(--dark); margin-top: 15px; font-size: 14px; transition: 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--dark)'" onclick="logout()"><i class="fa fa-sign-out" style="margin-right: 8px;"></i> Logout Account</p>
+        </div>
+    </div>
+
+<div class="hero">
+<div class="hero-text">
+        <h1>Give your body a new look</h1>
+        <p>Consistency is the secret ingredient of greatness. Elevate your everyday wardrobe with our premium collection designed for modern living.</p>
+        <a href="#products" class="btn" style="width:auto; display:inline-block; margin-top:10px; padding: 15px 35px; font-size: 16px;">Explore Now <i class="fa-solid fa-arrow-right" style="margin-left: 8px;"></i></a>
+    </div>
+    <div class="hero-img">
+        <img src="main.png" alt="Fashion Model">
+    </div>
+</div>
+
+    <div class="container" id="products">
+        <h2 class="title">Featured Products</h2>
+        <div class="row" id="product-list"></div>
+    </div>
+
+    <div class="right-sidebar" id="messages-sidebar">
+        <div class="sidebar-header">
+            <h3>Your Invoices & Messages</h3>
+            <i class="fa fa-times" onclick="toggleMessages()" style="cursor:pointer; font-size: 20px; transition: 0.3s;" onmouseover="this.style.transform='rotate(90deg)'" onmouseout="this.style.transform='none'"></i>
+        </div>
+        <div class="sidebar-content" id="messages-list">
+            </div>
+    </div>
+
+   <div class="right-sidebar" id="cart-sidebar">
+    <div class="sidebar-header">
+        <h3>Shopping Cart</h3>
+        <i class="fa fa-times" onclick="toggleCart()" style="cursor:pointer; font-size: 20px;"></i>
+    </div>
+    
+    <div class="sidebar-content" id="cart-list">
+        </div>
+
+    <div class="sidebar-footer">
+        <div class="promo-section">
+            <div class="promo-input-group">
+                <input type="text" id="promo-input" placeholder="Promo Code (e.g. SAVE200)">
+                <button class="btn" onclick="applyPromo()" style="width: auto; padding: 8px 15px; border-radius: 5px;">Apply</button>
+            </div>
+            <p id="promo-msg" style="font-size: 11px; margin-top: 5px;"></p>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; margin: 15px 0; font-weight:bold; font-size: 18px;">
+            <span>Total:</span> 
+            <span id="cart-total">$0.00</span>
+        </div>
+
+        <a href="payment.html" class="btn" 
+           style="display: block; text-align: center; text-decoration: none; padding: 16px; font-size: 16px; box-sizing: border-box;" 
+           onclick="return handleCheckout(event)">
+           PROCEED TO CHECKOUT
+        </a>
+    </div>
+</div>
+    </div>
+
+    <div class="modal-overlay" id="login-modal">
+        <div class="login-box">
+            <div class="login-img"></div>
+            <div class="login-form">
+                <div id="view-login">
+                    <h2 style="color:var(--dark); margin-bottom:10px; font-size: 32px;">Welcome To Red Store</h2>
+                    <p style="color: var(--grey); margin-bottom: 30px; font-size: 14px;">Enter your details to access your account.</p>
+                    <div class="input-group"><input type="email" id="l-email" placeholder="Email Address" autocomplete="off"></div>
+                    <div class="input-group"><input type="password" id="l-pass" placeholder="Password" autocomplete="off"></div>
+                    <button class="btn" style="padding: 15px; font-size: 16px; margin-top: 10px;" onclick="loginUser()">LOGIN SECURELY</button>
+                    <p style="cursor:pointer; font-size:14px; text-align:center; margin-top:20px; color:var(--grey);" onclick="toggleView('register')">New here?! <span style="color:var(--primary); font-weight:bold;">Create an Account</span></p>
+                </div>
+                <div id="view-register" class="hidden">
+                    <h2 style="color:var(--dark); margin-bottom:10px; font-size: 32px;">Join the Club</h2>
+                    <p style="color: var(--grey); margin-bottom: 30px; font-size: 14px;">Create an account for exclusive offers.</p>
+                    <div class="input-group"><input type="text" id="r-name" placeholder="Full Name" autocomplete="off"></div>
+                    <div class="input-group"><input type="email" id="r-email" placeholder="Email Address" autocomplete="off"></div>
+                    <div class="input-group"><input type="password" id="r-pass" placeholder="Create Password" autocomplete="off"></div>
+                    <button class="btn" style="padding: 15px; font-size: 16px; margin-top: 10px;" onclick="registerUser()">REGISTER NOW</button>
+                    <p style="cursor:pointer; font-size:14px; text-align:center; margin-top:20px; color:var(--grey);" onclick="toggleView('login')">Already have an account.?! <span style="color:var(--primary); font-weight:bold;">Login</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="product-detail-modal">
+        <div class="product-modal-box">
+            <i class="fa fa-times close-modal-btn" onclick="closeProductDetail()"></i>
+            <div class="p-modal-img"><img id="detail-img" src="" alt="Product"></div>
+            <div class="p-modal-details">
+                <h2 id="detail-title" class="p-modal-title">Product Name</h2>
+                <h3 id="detail-price" class="p-modal-price">$0.00</h3>
+                <p id="detail-desc" class="p-modal-desc">Product description...</p>
+                
+                <p style="margin: 0 0 10px; font-weight: bold; font-size: 14px; color: var(--dark);">Select Size:</p>
+                <div class="size-selector" id="detail-sizes">
+                    <div class="size-btn active" onclick="selectSize(this, 'S')">S</div>
+                    <div class="size-btn" onclick="selectSize(this, 'M')">M</div>
+                    <div class="size-btn" onclick="selectSize(this, 'L')">L</div>
+                    <div class="size-btn" onclick="selectSize(this, 'XL')">XL</div>
+                </div>
+
+                <div style="display: flex; gap: 15px; margin-top: 10px;">
+                    <button class="btn" id="detail-add-btn" style="flex: 2; padding: 16px; font-size: 16px;"><i class="fa fa-cart-plus" style="margin-right: 8px;"></i> Add to Cart</button>
+                    <button class="btn" onclick="closeProductDetail()" style="flex: 1; background: #eee; color: #333; padding: 16px; font-size: 16px;">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="custom-alert-modal" style="z-index: 5000;">
+        <div class="custom-alert-box">
+            <i class="fa-solid fa-circle-check" id="alert-icon"></i>
+            <h2 id="alert-title">Success!</h2>
+            <p id="alert-msg">Action completed successfully.</p>
+            <button class="btn" onclick="hideAlert()" style="width:140px; font-size: 16px; padding: 12px;">Got it</button>
+        </div>
+    </div>
+<img src="logindog.png" >
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-col">
+                <h2 style="color:#fff; font-style: italic; font-weight: 800;">REDSTORE</h2>
+                <p style="margin-top: 15px; line-height: 1.6;">Welcome to Red Store, your premier destination for a curated shopping experience where quality meets unparalleled convenience. We pride ourselves on offering an extensive range of high-caliber products designed to integrate seamlessly into your lifestyle, ensuring that every purchase reflects our commitment to excellence and durability.</p>
+            </div>
+            <div class="footer-col">
+                <h3>Support & Contact</h3>
+                <a href="tel:+919532914733" class="contact-info"><i class="fa fa-phone" style="width: 20px;"></i> +91 9532914733</a>
+                <a href="mailto:support@redstore.com" class="contact-info"><i class="fa fa-envelope" style="width: 20px;"></i> support@redstore.com</a>
+            </div>
+            <div class="footer-col">
+                <h3>Follow Us</h3>
+                <div class="social-icons">
+                    <div class="instagram-link-container" style="margin: 20px 0; text-align: center;">
+    <a href="https://www.instagram.com/krishnn_011/" target="_blank" class="insta-btn">
+        <i class="fa-brands fa-instagram"></i> Follow @krishn_011
+    </a>
+</div>       
+              <i class a href="https://www.instagram.com/in/krishnn_011/" target="_blank" class="fa-brands fa-instagram"></i>
+             <i class="fa-brands fa-github"></i>
+             
+                    <i class="fa-brands fa-facebook"></i>
+                    <i class="fa-brands fa-twitter"></i>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const products = [
+            { id: 1, name: "Red Classic T-Shirt", price: 45.00, img: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500", desc: "100% Cotton, pre-shrunk premium fabric." },
+            { id: 2, name: "Speedster Sports Shoes", price: 85.00, img: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500", desc: "Ergonomic design for maximum athletic performance." },
+            { id: 3, name: "Urban Comfort Joggers", price: 55.00, img: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500", desc: "Perfect for lounging or light gym sessions." },
+            { id: 4, name: "Luxury Gold Watch", price: 120.00, img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500", desc: "Water-resistant, stainless steel with gold finish." },
+            { id: 5, name: "Wireless Pro Headphones", price: 199.00, img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500", desc: "Studio quality sound with noise cancellation." },
+            { id: 6, name: "Leather Travel Bag", price: 140.00, img: "https://images.unsplash.com/photo-1547949003-9792a18a2601?w=500", desc: "Hand-stitched genuine leather for the modern traveler." },
+            { id: 7, name: "Classic Denim Jacket", price: 75.00, img: "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=500", desc: "Rugged denim built for style and durability." },
+            { id: 8, name: "T-Shirt", price: 85.00, img: "https://images.unsplash.com/photo-1523199455310-87b16c0eed11?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", desc: "100% cotton with collection of styles carry with you." },
+            { id: 9, name: "Premium full frog", price: 85.00, img: "https://images.unsplash.com/photo-1760245174919-f42c7df7c68e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDd8fHxlbnwwfHx8fHw%3D", desc: "STYLING YOU WITH ." },
+            { id: 10, name: "Premium ", price: 85.00, img: "https://images.unsplash.com/photo-1627858270115-9a6c5714e323?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDEwfHx8ZW58MHx8fHx8", desc: "STYLING YOU WITH ." },
+            { id: 11, name: "Premium full frog", price: 85.00, img: "https://images.unsplash.com/photo-1615899486509-84e2c782b0da?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTZ8fGNsb3RoaW5nJTIwbW9kZWx8ZW58MHx8MHx8fDA%3D", desc: "STYLING YOU WITH ." },
+            { id: 12, name: "Premium full frog", price: 85.00, img: "https://images.unsplash.com/photo-1675095525233-1158c2b2385c?q=80&w=465&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", desc: "STYLING YOU WITH ." },
+            { id: 13, name: "Premium full frog", price: 85.00, img: "https://images.unsplash.com/photo-1619042220193-1764e5a87fce?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjN8fGNsb3RoaW5nJTIwbW9kZWx8ZW58MHx8MHx8fDA%3D", desc: "STYLING YOU WITH ." },
+            { id: 14, name: "Premium full frog", price: 85.00, img: "https://images.unsplash.com/photo-1611886163562-95d25f547930?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mjh8fGNsb3RoaW5nJTIwbW9kZWx8ZW58MHx8MHx8fDA%3D", desc: "STYLING YOU WITH ." },
+            { id: 15, name: "Premium full frog", price: 85.00, img: "https://images.unsplash.com/photo-1620674282477-e75c59dcfac9?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NDB8fGNsb3RoaW5nJTIwbW9kZWx8ZW58MHx8MHx8fDA%3D", desc: "STYLING YOU WITH ." },
+            { id: 16, name: "Premium full frog", price: 85.00, img: "https://plus.unsplash.com/premium_photo-1727967189833-70451ee7f3c8?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mzd8fGNsb3RoaW5nJTIwbW9kZWx8ZW58MHx8MHx8fDA%3D", desc: "STYLING YOU WITH ." },
+            { id: 17, name: "Premium full frog", price: 85.00, img: "https://images.unsplash.com/photo-1696451202957-87b4fab05e37?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MzJ8fGNsb3RoaW5nJTIwbW9kZWx8ZW58MHx8MHx8fDA%3D", desc: "STYLING YOU WITH ." },
+            { id: 18, name: "Premium full frog", price: 85.00, img: "https://plus.unsplash.com/premium_photo-1765304738860-401d3f24c5a6?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDEyfHx8ZW58MHx8fHx8", desc: "STYLING YOU WITH ." },
+            { id: 19, name: "Premium full frog", price: 85.00, img: "https://images.unsplash.com/photo-1740418538581-c1f4c0c8b6af?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDEwfHx8ZW58MHx8fHx8", desc: "STYLING YOU WITH ." },
+            { id: 20, name: "Premium full frog", price: 85.00, img: "https://plus.unsplash.com/premium_photo-1769131129408-6cdf23f8783d?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDIwfHx8ZW58MHx8fHx8", desc: "STYLING YOU WITH ." },
+            { id: 21, name: "Premium full frog", price: 85.00, img: "https://plus.unsplash.com/premium_photo-1739699781720-29ec3e8e0db2?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDI0fHx8ZW58MHx8fHx8", desc: "STYLING YOU WITH ." },
+            { id: 22, name: "Premium full frog", price: 85.00, img: "https://plus.unsplash.com/premium_photo-1673356302067-aac3b545a362?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OXx8Y2xvdGhpbmclMjBzdG9yZXxlbnwwfHwwfHx8MA%3D%3D", desc: "STYLING YOU WITH ." },
+            { id: 23, name: "Premium full frog", price: 85.00, img: "https://images.unsplash.com/photo-1599012307530-d163bd04ecab?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTl8fGNsb3RoaW5nJTIwc3RvcmV8ZW58MHx8MHx8fDA%3D", desc: "STYLING YOU WITH ." },
+            { id: 24, name: "Premium full frog", price: 85.00, img: "https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8Y2xvdGhpbmd8ZW58MHx8MHx8fDA%3D", desc: "STYLING YOU WITH ." },
+            { id: 25, name: "Premium full frog", price: 85.00, img: "https://images.unsplash.com/photo-1516762689617-e1cffcef479d?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8Y2xvdGhpbmd8ZW58MHx8MHx8fDA%3D", desc: "STYLING YOU WITH ." },
+            { id: 26, name: "Premium full frog", price: 85.00, img: "https://plus.unsplash.com/premium_photo-1675186049366-64a655f8f537?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTd8fGNsb3RoaW5nfGVufDB8fDB8fHww", desc: "STYLING YOU WITH ." },
+            { id: 27, name: "Premium full frog", price: 85.00, img: "https://images.unsplash.com/flagged/photo-1585052201332-b8c0ce30972f?q=80&w=435&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", desc: "STYLING YOU WITH ." },
+            { id: 28, name: "Premium full frog", price: 85.00, img: "https://plus.unsplash.com/premium_photo-1769131129408-6cdf23f8783d?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDIwfHx8ZW58MHx8fHx8", desc: "STYLING YOU WITH ." }
+        ];
+        let cart = [];
+        let currentSelectedSize = 'S';
+        
+        // --- PERMANENT DATA STORAGE LOGIC ---
+        let usersDB = JSON.parse(localStorage.getItem('redstore_usersDB')) || [];
+        let currentUser = JSON.parse(localStorage.getItem('redstore_currentUser')) || null;
+        let userMessages = JSON.parse(localStorage.getItem('redstore_messages')) || [];
+
+        window.onload = function() {
+            renderProducts();
+            if(!currentUser) {
+                setTimeout(() => { document.getElementById('login-modal').style.display='flex'; }, 1000);
+            } else {
+                updateAuthUI();
+                renderMessages();
+            }
+        };
+
+        // --- SEARCH AUTOFILL FIX & LIVE SEARCH ---
+        const searchInput = document.getElementById('search-input');
+        const searchResults = document.getElementById('search-results');
+
+        searchInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            searchResults.innerHTML = ''; 
+            if (query.length > 0) {
+                const filtered = products.filter(p => p.name.toLowerCase().includes(query));
+                if (filtered.length > 0) {
+                    filtered.forEach(p => {
+                        searchResults.innerHTML += `
+                            <div class="search-item" onclick="openProductDetail(${p.id}); document.getElementById('search-results').classList.remove('active'); document.getElementById('search-input').value='';">
+                                <img src="${p.img}">
+                                <div class="search-item-info"><h4>${p.name}</h4><p>$${p.price.toFixed(2)}</p></div>
+                            </div>`;
+                    });
+                } else {
+                    searchResults.innerHTML = `<div style="padding: 15px 20px; color: var(--grey); font-size: 14px;">No products found.</div>`;
+                }
+                searchResults.classList.add('active');
+            } else { searchResults.classList.remove('active'); }
+        });
+
+        document.addEventListener('click', e => {
+            if (!document.querySelector('.search-container').contains(e.target)) searchResults.classList.remove('active');
+        });
+
+        // --- ALERTS ---
+        function showCustomAlert(title, message, isError = false) {
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-msg').innerText = message;
+            const icon = document.getElementById('alert-icon');
+            if(isError) {
+                icon.className = "fa-solid fa-circle-exclamation"; icon.style.color = "#ff523b";
+            } else {
+                icon.className = "fa-solid fa-circle-check"; icon.style.color = "#4CAF50";
+            }
+            document.getElementById('custom-alert-modal').style.display = 'flex';
+        }
+        function hideAlert() { document.getElementById('custom-alert-modal').style.display = 'none'; }
+
+        // --- AUTH LOGIC ---
+        function toggleView(view) {
+            document.getElementById('view-login').classList.toggle('hidden', view === 'register');
+            document.getElementById('view-register').classList.toggle('hidden', view === 'login');
+        }
+
+        function registerUser() {
+            const name = document.getElementById('r-name').value.trim();
+            const email = document.getElementById('r-email').value.trim();
+            const pass = document.getElementById('r-pass').value.trim();
+
+            if(!name || !email || !pass) { showCustomAlert("Wait!", "Please fill in all fields.", true); return; }
+            if(usersDB.find(u => u.email === email)) {
+                showCustomAlert("Error", "Email already registered. Please login.", true);
+                return;
+            }
+
+            const newUser = { name, email, pass, id: Date.now() };
+            usersDB.push(newUser);
+            localStorage.setItem('redstore_usersDB', JSON.stringify(usersDB));
+            
+            currentUser = newUser;
+            localStorage.setItem('redstore_currentUser', JSON.stringify(currentUser));
+            
+            updateAuthUI();
+            document.getElementById('login-modal').style.display = 'none';
+            showCustomAlert("Welcome!", "Account created successfully.");
+        }
+
+        function loginUser() {
+            const email = document.getElementById('l-email').value.trim();
+            const pass = document.getElementById('l-pass').value.trim();
+
+            const user = usersDB.find(u => u.email === email && u.pass === pass);
+
+            if(user) {
+                currentUser = user;
+                localStorage.setItem('redstore_currentUser', JSON.stringify(currentUser));
+                updateAuthUI();
+                renderMessages();
+                document.getElementById('login-modal').style.display = 'none';
+                showCustomAlert("Success", "You are now logged in.");
+            } else {
+                showCustomAlert("Login Failed", "Invalid email or password.", true);
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('redstore_currentUser');
+            location.reload();
+        }
+
+        function updateAuthUI() {
+            const navProfile = document.getElementById('nav-profile-pic');
+            const navLogin = document.getElementById('nav-login-btn');
+            
+            if(currentUser) {
+                navProfile.style.display = 'block';
+                navLogin.style.display = 'none';
+                document.getElementById('profile-name').innerText = currentUser.name;
+                document.getElementById('profile-email').innerText = currentUser.email;
+            } else {
+                navProfile.style.display = 'none';
+                navLogin.style.display = 'block';
+            }
+        }
+
+        function openLogin() {
+            document.getElementById('login-modal').style.display = 'flex';
+        }
+
+        function toggleProfile() {
+            document.getElementById('profile-menu').classList.toggle('active');
+        }
+
+        // --- PRODUCT & CART LOGIC ---
+        function renderProducts() {
+            const container = document.getElementById('product-list');
+            container.innerHTML = products.map(p => `
+                <div class="product-col" onclick="openProductDetail(${p.id})">
+                    <img src="${p.img}" alt="${p.name}">
+                    <h4>${p.name}</h4>
+                    <p>$${p.price.toFixed(2)}</p>
+                </div>
+            `).join('');
+        }
+
+        function openProductDetail(id) {
+            const p = products.find(x => x.id === id);
+            if(!p) return;
+
+            document.getElementById('detail-img').src = p.img;
+            document.getElementById('detail-title').innerText = p.name;
+            document.getElementById('detail-price').innerText = `$${p.price.toFixed(2)}`;
+            document.getElementById('detail-desc').innerText = p.desc;
+            
+            document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.size-btn').classList.add('active');
+            currentSelectedSize = 'S';
+
+            const btn = document.getElementById('detail-add-btn');
+            btn.onclick = () => addToCart(p);
+
+            document.getElementById('product-detail-modal').style.display = 'flex';
+        }
+
+        function closeProductDetail() {
+            document.getElementById('product-detail-modal').style.display = 'none';
+        }
+
+        function selectSize(elem, size) {
+            document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+            elem.classList.add('active');
+            currentSelectedSize = size;
+        }
+
+        function addToCart(product) {
+            const existing = cart.find(c => c.id === product.id && c.size === currentSelectedSize);
+            if(existing) {
+                existing.qty++;
+            } else {
+                cart.push({ ...product, size: currentSelectedSize, qty: 1 });
+            }
+            updateCartUI();
+            closeProductDetail();
+            showCustomAlert("Added", `${product.name} (Size: ${currentSelectedSize}) added to cart.`);
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const cartList = document.getElementById('cart-list');
+            const cartCount = document.getElementById('cart-count');
+            const cartTotal = document.getElementById('cart-total');
+
+            cartCount.innerText = cart.reduce((acc, item) => acc + item.qty, 0);
+
+            if(cart.length === 0) {
+                cartList.innerHTML = `<p style="text-align:center; color:#999; margin-top:50px;">Your cart is currently empty.</p>`;
+                cartTotal.innerText = "$0.00";
+            } else {
+                let total = 0;
+                cartList.innerHTML = cart.map((item, index) => {
+                    total += item.price * item.qty;
+                    return `
+                        <div class="cart-item-row">
+                            <div style="display:flex; align-items:center;">
+                                <img src="${item.img}">
+                                <div class="cart-item-details">
+                                    <h5>${item.name}</h5>
+                                    <p>Size: ${item.size} | x${item.qty}</p>
+                                    <p>$${(item.price * item.qty).toFixed(2)}</p>
+                                </div>
+                            </div>
+                            <i class="fa fa-trash remove-item" onclick="removeFromCart(${index})"></i>
+                        </div>
+                    `;
+                }).join('');
+                
+                if(isPromoApplied) total = total * 0.8; 
+                cartTotal.innerText = `$${total.toFixed(2)}`;
+            }
+        }
+
+        let isPromoApplied = false;
+        function applyPromo() {
+            const code = document.getElementById('promo-input').value.trim().toUpperCase();
+            const msg = document.getElementById('promo-msg');
+            
+            if(cart.length === 0) { msg.style.color='red'; msg.innerText = "Cart is empty."; return; }
+            if(isPromoApplied) { msg.style.color='orange'; msg.innerText = "Code already applied."; return; }
+
+            if(code === 'SAVE200') {
+                isPromoApplied = true;
+                msg.style.color='green'; msg.innerText = "Success! 20% Discount Applied.";
+                updateCartUI();
+            } else {
+                msg.style.color='red'; msg.innerText = "Invalid Promo Code.";
+            }
+        }
+
+        // --- CHECKOUT & MESSAGE/PDF LOGIC ---
+        function handleCheckout() {
+            if(cart.length === 0) {
+                showCustomAlert("Oops!", "Your cart is empty.", true);
+                return;
+            }
+            if(!currentUser) {
+                showCustomAlert("Login Required", "Please login to complete checkout.", true);
+                openLogin();
+                return;
+            }
+
+            // 1. Calculate final total
+            let total = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+            if(isPromoApplied) total = total * 0.8;
+
+            // 2. Create Invoice Object
+            const orderId = 'ORD-' + Date.now();
+            const orderDate = new Date().toLocaleDateString();
+            
+            const invoiceMsg = {
+                id: orderId,
+                date: orderDate,
+                email: currentUser.email,
+                items: [...cart], // copy current cart items
+                total: total.toFixed(2),
+                type: 'invoice'
+            };
+
+            // 3. Save to Messages
+            userMessages.push(invoiceMsg);
+            localStorage.setItem('redstore_messages', JSON.stringify(userMessages));
+
+            // 4. Reset System
+            cart = [];
+            isPromoApplied = false;
+            document.getElementById('promo-input').value = '';
+            document.getElementById('promo-msg').innerText = '';
+            updateCartUI();
+            toggleCart(); // Close cart
+
+            // 5. Update UI
+            showCustomAlert("Order Placed!", "Check your messages for the invoice.");
+            renderMessages();
+            toggleMessages(); // Open messages
+        }
+
+        function renderMessages() {
+            const list = document.getElementById('messages-list');
+            const countBadge = document.getElementById('msg-count');
+
+            // Filter messages for current logged in user
+            const myMessages = userMessages.filter(m => m.email === currentUser.email);
+
+            if(myMessages.length > 0) {
+                countBadge.style.display = 'block';
+                countBadge.innerText = myMessages.length;
+                
+                list.innerHTML = myMessages.reverse().map(msg => {
+                    // Generate Preview Items (first 2 items)
+                    let itemsHtml = msg.items.map(i => `
+                        <div class="invoice-preview-item">
+                            <span>${i.name} (x${i.qty})</span>
+                            <span>$${(i.price * i.qty).toFixed(2)}</span>
+                        </div>
+                    `).join('');
+
+                    return `
+                        <div class="invoice-card">
+                            <div class="invoice-header-row">
+                                <div>
+                                    <div class="invoice-title">INVOICE #${msg.id}</div>
+                                    <div class="invoice-date">${msg.date}</div>
+                                </div>
+                                <i class="fa fa-file-invoice-dollar" style="color:var(--primary); font-size: 20px;"></i>
+                            </div>
+                            
+                            <div style="margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;">
+                                ${itemsHtml}
+                            </div>
+                            
+                            <div class="invoice-total-row">
+                                TOTAL PAID: $${msg.total}
+                            </div>
+
+                            <button class="pdf-btn" onclick="downloadInvoice('${msg.id}')">
+                                <i class="fa fa-download" style="margin-right:8px;"></i> Download PDF
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                countBadge.style.display = 'none';
+                list.innerHTML = `<p style="text-align:center; color:#999; margin-top:50px;">No messages or orders yet.</p>`;
+            }
+        }
+
+        // --- PDF GENERATION LOGIC ---
+        function downloadInvoice(orderId) {
+            const order = userMessages.find(m => m.id === orderId);
+            if(!order) return;
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // -- HEADER --
+            doc.setFont("courier", "bold");
+            doc.setFontSize(22);
+            doc.setTextColor(255, 82, 59); // Primary Red
+            doc.text("REDSTORE", 105, 20, null, null, "center");
+            
+            doc.setFontSize(12);
+            doc.setTextColor(0, 0, 0);
+            doc.setFont("courier", "normal");
+            doc.text("Official Invoice / Receipt", 105, 30, null, null, "center");
+
+            // -- INFO --
+            doc.setFontSize(10);
+            doc.text(`Order ID : ${order.id}`, 20, 50);
+            doc.text(`Date     : ${order.date}`, 20, 56);
+            doc.text(`Customer : ${currentUser.name}`, 20, 62);
+            doc.text(`Email    : ${currentUser.email}`, 20, 68);
+
+            // -- LINE --
+            doc.setLineWidth(0.5);
+            doc.line(20, 75, 190, 75);
+
+            // -- ITEMS --
+            let y = 85;
+            doc.setFont("courier", "bold");
+            doc.text("Item", 20, y);
+            doc.text("Size", 120, y);
+            doc.text("Qty", 150, y);
+            doc.text("Price", 170, y);
+            
+            doc.setFont("courier", "normal");
+            y += 8;
+
+            order.items.forEach(item => {
+                let name = item.name.length > 35 ? item.name.substring(0, 32) + "..." : item.name;
+                doc.text(name, 20, y);
+                doc.text(item.size, 120, y);
+                doc.text(item.qty.toString(), 150, y);
+                doc.text(`$${(item.price * item.qty).toFixed(2)}`, 170, y);
+                y += 8;
+            });
+
+            // -- TOTAL --
+            doc.line(20, y, 190, y);
+            y += 10;
+            doc.setFont("courier", "bold");
+            doc.setFontSize(14);
+            doc.text(`GRAND TOTAL: $${order.total}`, 190, y, null, null, "right");
+
+            // -- FOOTER --
+            doc.setFontSize(10);
+            doc.setFont("courier", "italic");
+            doc.setTextColor(100);
+            doc.text("Thank you for shopping with RedStore!", 105, 280, null, null, "center");
+
+            // Save File
+            doc.save(`Invoice_${order.id}.pdf`);
+        }
+
+        // --- SIDEBAR TOGGLES ---
+        function toggleCart() {
+            const cartSidebar = document.getElementById('cart-sidebar');
+            cartSidebar.classList.toggle('active');
+            if(cartSidebar.classList.contains('active')) {
+                document.getElementById('messages-sidebar').classList.remove('active');
+            }
+        }
+
+        function toggleMessages() {
+            const msgSidebar = document.getElementById('messages-sidebar');
+            msgSidebar.classList.toggle('active');
+            if(msgSidebar.classList.contains('active')) {
+                document.getElementById('cart-sidebar').classList.remove('active');
+            }
+        }
+function handleCheckout(event) {
+    if(!currentUser) { 
+        event.preventDefault(); // Stops the anchor tag from navigating
+        showCustomAlert("Hold on!", "Please log in to checkout.", true); 
+        openLogin(); 
+        return false; 
+    }
+    if(cart.length === 0) { 
+        event.preventDefault(); // Stops the anchor tag from navigating
+        showCustomAlert("Oops", "Your cart is empty!", true); 
+        return false; 
+    }
+    
+    // If the user is logged in and the cart is full, we do nothing to stop it.
+    // The anchor tag's href="payment.html" will naturally take them to the payment page!
+    return true;
+}
+    </script>
+    </body>
+</html>
